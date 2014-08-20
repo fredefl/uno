@@ -1,23 +1,36 @@
 <script src="jquery.min.js"></script>
 <script type="text/javascript">
-var deckFileLocation = 'output.svg'
 
 var Card = function (colour, rank) {
     this.colour = colour;
     this.rank = rank;
+    this.width = 242;
+    this.height = 362;
 
-    this.visualize = function () {
-    	var visualization = $(document.createElement('img'));
-		visualization.attr('src', deckFileLocation + '#' + this.colour + '-' + this.rank);
-
-		return visualization;
-    }
+    this.visualize = function (options) {
+    	return Visualize.visualize([this], options);
+    };
 }; 
 
 var Visualize = {
-	visualize: function (cards) {
+	defaultOptions: {
+		scale: 1.0,
+		deckFileLocation: 'cards.svg'
+	},
+
+	visualize: function (cards, options) {
+		options = options || {};
+
+		options = $.extend(this.defaultOptions, options);
+
 		return cards.map( function (card) {
-			return card.visualize();
+			var visualization = $(document.createElement('img'));
+			visualization.attr('src', options.deckFileLocation + '#' + card.colour + '-' + card.rank);
+			
+			visualization.attr('height', card.height * options.scale);
+			visualization.attr('width', card.width * options.scale);
+
+			return visualization;
 		});
 	}
 }
@@ -25,12 +38,16 @@ var Visualize = {
 var Hand = function (cards) {
 	this.cards = cards || [];
 
+	this.size = function () {
+		return this.cards.length;
+	}
+
 	this.addCards = function (cards) {
 		this.cards = this.cards + cards;
 	};
 
-	this.visualize = function () {
-		return Visualize.visualize(this.cards);
+	this.visualize = function (options) {
+		return Visualize.visualize(this.cards, options);
 	};
 }
 
@@ -69,6 +86,10 @@ var Deck = function () {
 	this.wildRanks = {
 		'wild': 4,
 		'draw_four': 4
+	}
+
+	this.size = function () {
+		return this.cards.length;
 	}
 	
 	// Adds multiple cards
@@ -124,8 +145,8 @@ var Deck = function () {
 		}
 	}
 
-	this.visualize = function () {
-		return Visualize.visualize(this.cards)
+	this.visualize = function (options) {
+		return Visualize.visualize(this.cards, options)
 	};
 
 	this.draw = function (amount) {
@@ -176,15 +197,20 @@ $(function() {
 	deck.build();
 	deck.shuffle();
 
-	var hands = deck.deal(2);
+	var hands = deck.deal(15);
+
+	var initialCard = deck.draw()[0];
+
+	$('#container').append("<h1>Initial card</h1>");
+	$('#container').append(initialCard.visualize());
 
 	hands.forEach( function (hand, index) {
-		$('#container').append("<h2>Hand " + (index + 1) + "</h2>");
-		$('#container').append(hand.visualize());
+		$('#container').append("<h2>Hand " + (index + 1) + " (" + hand.size() + ")</h2>");
+		$('#container').append(hand.visualize({scale: 0.5}));
 	});
 
-	$('#container').append("<h2>Deck</h2>");
-	$('#container').append(deck.visualize());
+	$('#container').append("<h2>Deck (" + deck.size() + ")</h2>");
+	$('#container').append(deck.visualize({scale: 0.3}));
 
 	console.log(deck);
 });
