@@ -2,7 +2,7 @@
 <script type="text/javascript">
 var deckFileLocation = 'output.svg'
 
-var Card = function(colour, rank) {
+var Card = function (colour, rank) {
     this.colour = colour;
     this.rank = rank;
 
@@ -14,12 +14,35 @@ var Card = function(colour, rank) {
     }
 }; 
 
+var Visualize = {
+	visualize: function (cards) {
+		return cards.map( function (card) {
+			return card.visualize();
+		});
+	}
+}
+
+var Hand = function (cards) {
+	this.cards = cards || [];
+
+	this.addCards = function (cards) {
+		this.cards = this.cards + cards;
+	};
+
+	this.visualize = function () {
+		return Visualize.visualize(this.cards);
+	};
+}
+
 var Deck = function () {
 	// The pro's do it, as do we
 	var that = this;
 
 	// Contains all cards in the deck at present time
 	this.cards = [];
+
+	// Hand size
+	this.handSize = 7;
 
 	// Contains colours present in the game
 	// - please do not add other colours, do ONLY exclude colours
@@ -57,7 +80,10 @@ var Deck = function () {
 		this.cards.push(card);
 	};
 
-	this.build = function () {
+	this.build = function (multiplier) {
+		// Default to 1
+		multiplier = multiplier || 1;
+
 		// Discard all cards
 		this.cards = [];
 
@@ -66,7 +92,7 @@ var Deck = function () {
 
 			Object.keys(that.colouredRanks).forEach( function (rank) {
 				amount = that.colouredRanks[rank];
-				for (var i = 1; i <= amount; i++) {
+				for (var i = 1; i <= amount * multiplier; i++) {
 					that.addCard(new Card(colour, rank));
 				};
 			});
@@ -75,7 +101,7 @@ var Deck = function () {
 		// Add all wild cards
 		Object.keys(that.wildRanks).forEach( function (rank) {
 			amount = that.wildRanks[rank];
-			for (var i = 1; i <= amount; i++) {
+			for (var i = 1; i <= amount * multiplier; i++) {
 				that.addCard(new Card('wild', rank));
 			};
 		});
@@ -99,9 +125,48 @@ var Deck = function () {
 	}
 
 	this.visualize = function () {
-		cards.forEach( function (card) {
-			
-		})
+		return Visualize.visualize(this.cards)
+	};
+
+	this.draw = function (amount) {
+		// 1 card will be drawn by default
+		amount = amount || 1;
+		
+		// Check card supply
+		if (this.cards.length >= amount) {
+			var drawnCards = [];
+
+			// Return x amount of cards
+			for (var i = 1; i <= amount; i++) {
+				// Pop cards off the stack and push them to the new pile
+				drawnCards.push(this.cards.pop());
+			}
+
+			// Return drawn cards
+			return drawnCards;
+		}
+
+		// We are out of cards, please refill
+		return false;
+	}
+
+	this.deal = function (amount) {
+		// 1 hand will be drawn by default
+		amount = amount || 1;
+
+		// Check card supply
+		if (this.cards.length >= amount * this.handSize) {
+			var hands = []
+
+			// Return x amount of hands
+			for (var i = 1; i <= amount; i++) {
+				hands.push( new Hand(this.draw(this.handSize)) );
+			}
+
+			return hands;
+		}
+
+		return false;
 	}
 };
 
@@ -111,10 +176,20 @@ $(function() {
 	deck.build();
 	deck.shuffle();
 
+	var hands = deck.deal(2);
+
+	hands.forEach( function (hand, index) {
+		$('#container').append("<h2>Hand " + (index + 1) + "</h2>");
+		$('#container').append(hand.visualize());
+	});
+
+	$('#container').append("<h2>Deck</h2>");
+	$('#container').append(deck.visualize());
+
 	console.log(deck);
 });
 
 </script>
 
-
-<img src="output.svg#yellow-4">
+<div id="container"></div>
+<!--<img src="output.svg#yellow-4">-->
