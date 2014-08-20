@@ -1,5 +1,120 @@
-<img src="output.svg#yellow-4" width="242" height="362">
-<img src="output.svg#yellow-5" width="242" height="362">
-<img src="output.svg#red-9" width="242" height="362">
-<img src="output.svg#wild-wild" width="242" height="362">
-<img src="output.svg#wild-draw_four" width="242" height="362">
+<script src="jquery.min.js"></script>
+<script type="text/javascript">
+var deckFileLocation = 'output.svg'
+
+var Card = function(colour, rank) {
+    this.colour = colour;
+    this.rank = rank;
+
+    this.visualize = function () {
+    	var visualization = $(document.createElement('img'));
+		visualization.attr('src', deckFileLocation + '#' + this.colour + '-' + this.rank);
+
+		return visualization;
+    }
+}; 
+
+var Deck = function () {
+	// The pro's do it, as do we
+	var that = this;
+
+	// Contains all cards in the deck at present time
+	this.cards = [];
+
+	// Contains colours present in the game
+	// - please do not add other colours, do ONLY exclude colours
+	this.colours = ['red', 'green', 'blue', 'yellow'];
+
+	// Contains all cards with colours
+	this.colouredRanks = {
+		'0': 1,
+		'1': 2,
+		'2': 2,
+		'3': 2,
+		'4': 2,
+		'5': 2,
+		'6': 2,
+		'7': 2,
+		'8': 2,
+		'9': 2,
+		'skip': 2,
+		'reverse': 2,
+		'draw_two': 2
+	};
+
+	// Contains all cards without colours (wild) 
+	this.wildRanks = {
+		'wild': 4,
+		'draw_four': 4
+	}
+	
+	// Adds multiple cards
+	this.addCards = function (cards) {
+		cards.every(this.addCard);
+	};
+
+	this.addCard = function (card) {
+		this.cards.push(card);
+	};
+
+	this.build = function () {
+		// Discard all cards
+		this.cards = [];
+
+		// Add all colour cards
+		this.colours.forEach( function (colour) {
+
+			Object.keys(that.colouredRanks).forEach( function (rank) {
+				amount = that.colouredRanks[rank];
+				for (var i = 1; i <= amount; i++) {
+					that.addCard(new Card(colour, rank));
+				};
+			});
+		});
+
+		// Add all wild cards
+		Object.keys(that.wildRanks).forEach( function (rank) {
+			amount = that.wildRanks[rank];
+			for (var i = 1; i <= amount; i++) {
+				that.addCard(new Card('wild', rank));
+			};
+		});
+	}
+
+	// Fisher-Yates shuffle
+	this.shuffle = function () {
+		var currentIndex = this.cards.length, temporaryValue, randomIndex ;
+
+		// While there remain elements to shuffle...
+		while (0 !== currentIndex) {
+			// Pick a remaining element...
+			randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex -= 1;
+
+			// And swap it with the current element.
+			temporaryValue = this.cards[currentIndex];
+			this.cards[currentIndex] = this.cards[randomIndex];
+			this.cards[randomIndex] = temporaryValue;
+		}
+	}
+
+	this.visualize = function () {
+		cards.forEach( function (card) {
+			
+		})
+	}
+};
+
+
+$(function() {
+	var deck = new Deck();
+	deck.build();
+	deck.shuffle();
+
+	console.log(deck);
+});
+
+</script>
+
+
+<img src="output.svg#yellow-4">
