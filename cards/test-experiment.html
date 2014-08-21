@@ -1,0 +1,254 @@
+<html><head><script src="jquery.min.js"></script><style type="text/css"></style>
+<script type="text/javascript">
+
+/**
+
+-20 deg 	right -90px
+-10 deg 	right -80px
+0 	deg 	right -80px
+10	deg		-
+20 	deg		left -80px, bottom -20px
+30 deg		left -90px, bottom -40px
+40 deg		left -100ox, bottom -60px
+
+
+
+
+*/
+
+
+
+var Card = function (colour, rank) {
+    this.colour = colour;
+    this.rank = rank;
+    this.width = 242;
+    this.height = 362;
+
+    this.visualize = function (options) {
+    	return Visualize.visualize([this], options);
+    };
+}; 
+
+var Visualize = {
+	defaultOptions: {
+		scale: 1.0,
+		deckFileLocation: 'cards.svg'
+	},
+
+	visualize: function (cards, options) {
+		options = options || {};
+
+		options = $.extend(this.defaultOptions, options);
+
+		return cards.map( function (card) {
+			var visualization = $(document.createElement('img'));
+			visualization.attr('src', options.deckFileLocation + '#' + card.colour + '-' + card.rank);
+			
+			visualization.attr('height', card.height * options.scale);
+			visualization.attr('width', card.width * options.scale);
+
+			return visualization;
+		});
+	}
+}
+
+var Hand = function (cards) {
+	this.cards = cards || [];
+
+	this.size = function () {
+		return this.cards.length;
+	}
+
+	this.addCards = function (cards) {
+		this.cards = this.cards + cards;
+	};
+
+	this.visualize = function (options) {
+		return Visualize.visualize(this.cards, options);
+	};
+}
+
+var Deck = function () {
+	// The pro's do it, as do we
+	var that = this;
+
+	// Contains all cards in the deck at present time
+	this.cards = [];
+
+	// Hand size
+	this.handSize = 7;
+
+	// Contains colours present in the game
+	// - please do not add other colours, do ONLY exclude colours
+	this.colours = ['red', 'green', 'blue', 'yellow'];
+
+	// Contains all cards with colours
+	this.colouredRanks = {
+		'0': 1,
+		'1': 2,
+		'2': 2,
+		'3': 2,
+		'4': 2,
+		'5': 2,
+		'6': 2,
+		'7': 2,
+		'8': 2,
+		'9': 2,
+		'skip': 2,
+		'reverse': 2,
+		'draw_two': 2
+	};
+
+	// Contains all cards without colours (wild) 
+	this.wildRanks = {
+		'wild': 4,
+		'draw_four': 4
+	}
+
+	this.size = function () {
+		return this.cards.length;
+	}
+	
+	// Adds multiple cards
+	this.addCards = function (cards) {
+		cards.every(this.addCard);
+	};
+
+	this.addCard = function (card) {
+		this.cards.push(card);
+	};
+
+	this.build = function (multiplier) {
+		// Default to 1
+		multiplier = multiplier || 1;
+
+		// Discard all cards
+		this.cards = [];
+
+		// Add all colour cards
+		this.colours.forEach( function (colour) {
+
+			Object.keys(that.colouredRanks).forEach( function (rank) {
+				amount = that.colouredRanks[rank];
+				for (var i = 1; i <= amount * multiplier; i++) {
+					that.addCard(new Card(colour, rank));
+				};
+			});
+		});
+
+		// Add all wild cards
+		Object.keys(that.wildRanks).forEach( function (rank) {
+			amount = that.wildRanks[rank];
+			for (var i = 1; i <= amount * multiplier; i++) {
+				that.addCard(new Card('wild', rank));
+			};
+		});
+	}
+
+	// Fisher-Yates shuffle
+	this.shuffle = function () {
+		var currentIndex = this.cards.length, temporaryValue, randomIndex ;
+
+		// While there remain elements to shuffle...
+		while (0 !== currentIndex) {
+			// Pick a remaining element...
+			randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex -= 1;
+
+			// And swap it with the current element.
+			temporaryValue = this.cards[currentIndex];
+			this.cards[currentIndex] = this.cards[randomIndex];
+			this.cards[randomIndex] = temporaryValue;
+		}
+	}
+
+	this.visualize = function (options) {
+		return Visualize.visualize(this.cards, options)
+	};
+
+	this.draw = function (amount) {
+		// 1 card will be drawn by default
+		amount = amount || 1;
+		
+		// Check card supply
+		if (this.cards.length >= amount) {
+			var drawnCards = [];
+
+			// Return x amount of cards
+			for (var i = 1; i <= amount; i++) {
+				// Pop cards off the stack and push them to the new pile
+				drawnCards.push(this.cards.pop());
+			}
+
+			// Return drawn cards
+			return drawnCards;
+		}
+
+		// We are out of cards, please refill
+		return false;
+	}
+
+	this.deal = function (amount) {
+		// 1 hand will be drawn by default
+		amount = amount || 1;
+
+		// Check card supply
+		if (this.cards.length >= amount * this.handSize) {
+			var hands = []
+
+			// Return x amount of hands
+			for (var i = 1; i <= amount; i++) {
+				hands.push( new Hand(this.draw(this.handSize)) );
+			}
+
+			return hands;
+		}
+
+		return false;
+	}
+};
+
+
+$(function() {
+	var deck = new Deck();
+	deck.build();
+	deck.shuffle();
+
+	var hands = deck.deal(15);
+
+	var initialCard = deck.draw()[0];
+
+	$('#container').append("<h1>Initial card</h1>");
+	$('#container').append(initialCard.visualize());
+
+	hands.forEach( function (hand, index) {
+		$('#container').append("<h2>Hand " + (index + 1) + " (" + hand.size() + ")</h2>");
+		$('#container').append(hand.visualize({scale: 0.5}));
+	});
+
+	$('#container').append("<h2>Deck (" + deck.size() + ")</h2>");
+	$('#container').append(deck.visualize({scale: 0.3}));
+
+	console.log(deck);
+});
+
+</script>
+
+<style type="text/css"></style></head><body><div id="container"><h1>Initial card</h1><img src="cards.svg#blue-3" height="362" width="242"><h2>Hand 1 (7)</h2><img src="cards.svg#red-6" height="181" width="121"><img src="cards.svg#yellow-draw_two" height="181" width="121"><img src="cards.svg#wild-draw_four" height="181" width="121" style="
+    /* transform: translate(20px,20px) rotate(-10deg); */
+"><img src="cards.svg#wild-draw_four" height="181" width="121" style="
+    transform: rotate(8deg)translate(-75px,19px);
+"><img src="cards.svg#wild-draw_four" height="181" width="121" style="
+    transform: rotate(15deg)translate(-144px,60px);
+"><img src="cards.svg#wild-draw_four" height="181" width="121" style="
+    transform: rotate(21deg)translate(-204px,118px);
+"><img src="cards.svg#wild-draw_four" height="181" width="121" style="
+    transform: rotate(26deg)translate(-255px,187px);
+"><h2>Hand 2 (7)</h2><img src="cards.svg#ywild-draw_four" height="181" width="121"><img src="cards.svg#wukd-draw_four" height="181" width="121" style="
+    margin-left: -70px;
+"><img src="cards.svg#yellow-skip" height="181" width="121" style="
+    margin-left: -70px;
+"><img src="cards.svg#green-draw_two" height="181" width="121" style="
+    /* margin-left: -70px; */
+"><img src="cards.svg#red-draw_two" height="181" width="121"><img src="cards.svg#green-skip" height="181" width="121"><img src="cards.svg#yellow-8" height="181" width="121"><h2>Hand 3 (7)</h2><img src="cards.svg#blue-9" height="181" width="121"><img src="cards.svg#red-reverse" height="181" width="121"><img src="cards.svg#green-9" height="181" width="121"><img src="cards.svg#red-skip" height="181" width="121"><img src="cards.svg#blue-4" height="181" width="121"><img src="cards.svg#blue-7" height="181" width="121"><img src="cards.svg#blue-1" height="181" width="121"><h2>Hand 4 (7)</h2><img src="cards.svg#blue-3" height="181" width="121"><img src="cards.svg#red-7" height="181" width="121"><img src="cards.svg#yellow-5" height="181" width="121"><img src="cards.svg#green-1" height="181" width="121"><img src="cards.svg#blue-8" height="181" width="121"><img src="cards.svg#red-2" height="181" width="121"><img src="cards.svg#green-1" height="181" width="121"><h2>Hand 5 (7)</h2><img src="cards.svg#green-7" height="181" width="121"><img src="cards.svg#yellow-reverse" height="181" width="121"><img src="cards.svg#wild-draw_four" height="181" width="121"><img src="cards.svg#green-0" height="181" width="121"><img src="cards.svg#red-3" height="181" width="121"><img src="cards.svg#red-4" height="181" width="121"><img src="cards.svg#wild-draw_four" height="181" width="121"><h2>Hand 6 (7)</h2><img src="cards.svg#blue-0" height="181" width="121"><img src="cards.svg#green-4" height="181" width="121"><img src="cards.svg#green-3" height="181" width="121"><img src="cards.svg#blue-7" height="181" width="121"><img src="cards.svg#yellow-9" height="181" width="121"><img src="cards.svg#green-4" height="181" width="121"><img src="cards.svg#blue-4" height="181" width="121"><h2>Hand 7 (7)</h2><img src="cards.svg#blue-1" height="181" width="121"><img src="cards.svg#green-skip" height="181" width="121"><img src="cards.svg#red-2" height="181" width="121"><img src="cards.svg#green-8" height="181" width="121"><img src="cards.svg#wild-wild" height="181" width="121"><img src="cards.svg#green-reverse" height="181" width="121"><img src="cards.svg#blue-5" height="181" width="121"><h2>Hand 8 (7)</h2><img src="cards.svg#green-2" height="181" width="121"><img src="cards.svg#yellow-8" height="181" width="121"><img src="cards.svg#red-6" height="181" width="121"><img src="cards.svg#red-5" height="181" width="121"><img src="cards.svg#blue-reverse" height="181" width="121"><img src="cards.svg#yellow-6" height="181" width="121"><img src="cards.svg#yellow-0" height="181" width="121"><h2>Hand 9 (7)</h2><img src="cards.svg#red-skip" height="181" width="121"><img src="cards.svg#blue-2" height="181" width="121"><img src="cards.svg#yellow-skip" height="181" width="121"><img src="cards.svg#blue-6" height="181" width="121"><img src="cards.svg#blue-draw_two" height="181" width="121"><img src="cards.svg#yellow-4" height="181" width="121"><img src="cards.svg#red-9" height="181" width="121"><h2>Hand 10 (7)</h2><img src="cards.svg#yellow-3" height="181" width="121"><img src="cards.svg#blue-reverse" height="181" width="121"><img src="cards.svg#green-5" height="181" width="121"><img src="cards.svg#green-8" height="181" width="121"><img src="cards.svg#wild-wild" height="181" width="121"><img src="cards.svg#blue-8" height="181" width="121"><img src="cards.svg#blue-5" height="181" width="121"><h2>Hand 11 (7)</h2><img src="cards.svg#yellow-2" height="181" width="121"><img src="cards.svg#red-8" height="181" width="121"><img src="cards.svg#red-1" height="181" width="121"><img src="cards.svg#wild-wild" height="181" width="121"><img src="cards.svg#green-6" height="181" width="121"><img src="cards.svg#yellow-6" height="181" width="121"><img src="cards.svg#wild-wild" height="181" width="121"><h2>Hand 12 (7)</h2><img src="cards.svg#green-7" height="181" width="121"><img src="cards.svg#green-draw_two" height="181" width="121"><img src="cards.svg#red-4" height="181" width="121"><img src="cards.svg#green-3" height="181" width="121"><img src="cards.svg#red-5" height="181" width="121"><img src="cards.svg#yellow-5" height="181" width="121"><img src="cards.svg#blue-draw_two" height="181" width="121"><h2>Hand 13 (7)</h2><img src="cards.svg#yellow-1" height="181" width="121"><img src="cards.svg#blue-6" height="181" width="121"><img src="cards.svg#blue-9" height="181" width="121"><img src="cards.svg#green-2" height="181" width="121"><img src="cards.svg#yellow-draw_two" height="181" width="121"><img src="cards.svg#blue-skip" height="181" width="121"><img src="cards.svg#blue-2" height="181" width="121"><h2>Hand 14 (7)</h2><img src="cards.svg#green-6" height="181" width="121"><img src="cards.svg#yellow-3" height="181" width="121"><img src="cards.svg#wild-draw_four" height="181" width="121"><img src="cards.svg#yellow-9" height="181" width="121"><img src="cards.svg#red-9" height="181" width="121"><img src="cards.svg#red-1" height="181" width="121"><img src="cards.svg#green-reverse" height="181" width="121"><h2>Hand 15 (7)</h2><img src="cards.svg#red-3" height="181" width="121"><img src="cards.svg#yellow-7" height="181" width="121"><img src="cards.svg#yellow-4" height="181" width="121"><img src="cards.svg#yellow-1" height="181" width="121"><img src="cards.svg#yellow-2" height="181" width="121"><img src="cards.svg#wild-draw_four" height="181" width="121"><img src="cards.svg#red-8" height="181" width="121"><h2>Deck (2)</h2><img src="cards.svg#red-7" height="108.6" width="72.6"><img src="cards.svg#green-5" height="108.6" width="72.6"></div>
+<!--<img src="output.svg#yellow-4">--></body></html>

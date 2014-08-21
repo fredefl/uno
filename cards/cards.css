@@ -1,0 +1,35 @@
+.card {
+	transition-duration: 0.3s;
+	
+	margin-left: -70px;
+}
+/*
+.card:hover {
+	transform: translateY(-20px);
+}
+
+.card:active {
+	transform: translateY(-40px);
+}*/
+#container {
+	margin-left:200px;
+}
+#hand-cards {
+	height: 181;
+}
+#discard-pile .card {
+	position:absolute;
+	top:0px;
+	left:0px;
+	margin-left:0 !important;
+}
+#discard-pile-top, #discard-pile-dummy-1, #discard-pile-dummy-2 {
+	pointer-events: none;
+}
+ul {
+	list-style-type: none;
+}
+li {
+	list-style-type: none;
+	float:left;
+}

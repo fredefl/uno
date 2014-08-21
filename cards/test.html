@@ -1,4 +1,7 @@
+<link rel="stylesheet" href="cards.css"/>
+<link rel="stylesheet" href="jquery-ui.min.css"/>
 <script src="jquery.min.js"></script>
+<script src="jquery-ui.min.js"></script>
 <script type="text/javascript">
 
 /**
@@ -23,6 +26,7 @@ var Card = function (colour, rank) {
     this.rank = rank;
     this.width = 242;
     this.height = 362;
+    this.offset = -140;
 
     this.visualize = function (options) {
     	return Visualize.visualize([this], options);
@@ -30,9 +34,14 @@ var Card = function (colour, rank) {
 }; 
 
 var Visualize = {
+	deckFileLocation: 'cards.svg',
+
 	defaultOptions: {
 		scale: 1.0,
-		deckFileLocation: 'cards.svg'
+	},
+
+	getSource: function (card) {
+			return Visualize.deckFileLocation + '#' + card.colour + '-' + card.rank;
 	},
 
 	visualize: function (cards, options) {
@@ -42,12 +51,20 @@ var Visualize = {
 
 		return cards.map( function (card) {
 			var visualization = $(document.createElement('img'));
-			visualization.attr('src', options.deckFileLocation + '#' + card.colour + '-' + card.rank);
+			visualization.attr('src', Visualize.getSource(card));
 			
+			visualization.attr('class', 'card');
 			visualization.attr('height', card.height * options.scale);
 			visualization.attr('width', card.width * options.scale);
+			visualization.attr('style', "margin-left:" + (card.offset * options.scale) + "px;");
 
 			return visualization;
+		});
+	},
+
+	visualizeList: function (cards, options) {
+		return cards.map( function (card) {
+			return $(document.createElement('li')).append(Visualize.visualize([card], options));
 		});
 	}
 }
@@ -61,10 +78,6 @@ var Hand = function (cards) {
 
 	this.addCards = function (cards) {
 		this.cards = this.cards + cards;
-	};
-
-	this.visualize = function (options) {
-		return Visualize.visualize(this.cards, options);
 	};
 }
 
@@ -162,10 +175,6 @@ var Deck = function () {
 		}
 	}
 
-	this.visualize = function (options) {
-		return Visualize.visualize(this.cards, options)
-	};
-
 	this.draw = function (amount) {
 		// 1 card will be drawn by default
 		amount = amount || 1;
@@ -206,33 +215,62 @@ var Deck = function () {
 
 		return false;
 	}
-};
+}
+
+var Game = function (options) {
+	
+	this.defaultOptions = {}
+
+	this.options = $.extend(this.defaultOptions, options || {});
+
+	this.start = function () {
+		this.deck = new Deck();
+		this.deck.build();
+		this.deck.shuffle();
+
+		this.hand = this.deck.deal(1)[0];
+
+		var initialCard = this.deck.draw()[0];
+		$('#discard-pile-top').attr('src', Visualize.getSource(initialCard));
+		$('#hand-cards').append(Visualize.visualizeList(this.hand.cards, {scale: 0.5}));
+
+		$('#hand-cards, #discard-pile-drop').sortable({
+			connectWith: 'ul',
+			tolerance: "pointer"
+		});
+
+		$('#discard-pile-drop').on('sortover sortreceive', function (event, ui) {
+				$(event.toElement).height(362).width(242);
+		});
+		$('#hand-cards').on('sortover sortreceive', function (event, ui) {
+			$(event.toElement).height(181).width(121);
+		});
+	}
+}
 
 
 $(function() {
-	var deck = new Deck();
-	deck.build();
-	deck.shuffle();
-
-	var hands = deck.deal(15);
-
-	var initialCard = deck.draw()[0];
-
-	$('#container').append("<h1>Initial card</h1>");
-	$('#container').append(initialCard.visualize());
-
-	hands.forEach( function (hand, index) {
-		$('#container').append("<h2>Hand " + (index + 1) + " (" + hand.size() + ")</h2>");
-		$('#container').append(hand.visualize({scale: 0.5}));
-	});
-
-	$('#container').append("<h2>Deck (" + deck.size() + ")</h2>");
-	$('#container').append(deck.visualize({scale: 0.3}));
-
-	console.log(deck);
+	var game = new Game();
+	game.start();
 });
 
 </script>
+<div id="container">
+		<div id="discard-pile" style="position:relative;width:242px;height:362px;">
+				<img src="cards.svg#wild-wild" class="card" id="discard-pile-dummy-1" height="362" width="242" style="transform: rotate(5deg)">
+				<img src="cards.svg#wild-wild" class="card" id="discard-pile-dummy-2" height="362" width="242" style="transform: rotate(-5deg)">
+				<img src="cards.svg#wild-wild" class="card" id="discard-pile-top" height="362" width="242">
+				<ul id="discard-pile-drop" style="height:362px;width:242px">
+		
+				</ul>
+		</div>
 
-<div id="container"></div>
+		<div id="hand">
+				<ul id="hand-cards">
+
+				</ul>
+		</div>
+
+
+</div>
 <!--<img src="output.svg#yellow-4">-->
