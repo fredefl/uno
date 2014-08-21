@@ -29,7 +29,7 @@ var Card = function (colour, rank) {
 }; 
 
 var Visualize = {
-	deckFileLocation: 'cards.svg',
+	deckFileLocation: 'img/cards.svg',
 
 	defaultOptions: {
 		scale: 1.0,
