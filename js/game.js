@@ -1,8 +1,3 @@
-<link rel="stylesheet" href="cards.css"/>
-<link rel="stylesheet" href="jquery-ui.min.css"/>
-<script src="jquery.min.js"></script>
-<script src="jquery-ui.min.js"></script>
-<script type="text/javascript">
 
 /**
 
@@ -253,24 +248,3 @@ $(function() {
 	var game = new Game();
 	game.start();
 });
-
-</script>
-<div id="container">
-		<div id="discard-pile" style="position:relative;width:242px;height:362px;">
-				<img src="cards.svg#wild-wild" class="card" id="discard-pile-dummy-1" height="362" width="242" style="transform: rotate(5deg)">
-				<img src="cards.svg#wild-wild" class="card" id="discard-pile-dummy-2" height="362" width="242" style="transform: rotate(-5deg)">
-				<img src="cards.svg#wild-wild" class="card" id="discard-pile-top" height="362" width="242">
-				<ul id="discard-pile-drop" style="height:362px;width:242px">
-		
-				</ul>
-		</div>
-
-		<div id="hand">
-				<ul id="hand-cards">
-
-				</ul>
-		</div>
-
-
-</div>
-<!--<img src="output.svg#yellow-4">-->
