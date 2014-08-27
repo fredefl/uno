@@ -1,21 +1,4 @@
 
-/**
-
--20 deg 	right -90px
--10 deg 	right -80px
-0 	deg 	right -80px
-10	deg		-
-20 	deg		left -80px, bottom -20px
-30 deg		left -90px, bottom -40px
-40 deg		left -100ox, bottom -60px
-
-
-
-
-*/
-
-
-
 var Card = function (colour, rank) {
     this.colour = colour;
     this.rank = rank;
