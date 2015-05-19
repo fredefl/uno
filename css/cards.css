@@ -50,3 +50,65 @@ li {
 	opacity: 0.7;
 	transition: ease 0.5s;
 }
+
+/* Fireworks */
+.boom {
+   position: absolute;
+   margin: 0 auto;
+   height: 300px;
+   width: 300px;
+
+   -webkit-perspective: 500px;
+   -moz-perspective: 500px;
+   perspective: 500px;
+}
+
+.boom > div {
+   position: absolute;
+
+   -webkit-transform-origin: 50% 50% 0px;
+   -moz-transform-origin: 50% 50% 0px;
+   transform-origin: 50% 50% 0px;
+
+   -webkit-transform-style: preserve-3d;
+   -moz-transform-style: preserve-3d;
+   transform-style: preserve-3d;
+}
+
+.place {
+   top: 0;
+   left: 0;
+   height: 0;
+   width: 0;
+}
+
+.spark {
+  width: 4px;
+  height: 3px;
+  border-radius: 5px;
+}
+
+.spark.red {
+  background-color: #f00;
+  color: #f00;
+}
+
+.spark.green {
+  background-color: #0f0;
+  color: #0f0;
+}
+
+.spark.blue {
+  background-color: #00f;
+  color: #00f;
+}
+
+.spark.yellow {
+  background-color: #ff0;
+  color: #ff0;
+}
+
+.spark.white {
+  background-color: #fff;
+  color: #fff;
+}
