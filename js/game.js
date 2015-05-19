@@ -1,89 +1,140 @@
-
-function generate_guid () {
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-    return v.toString(16);
-	});
-}
-
+// The card object
 var Card = function (colour, rank) {
+	// The colour of the card (red, blue, yellow, green)
     this.colour = colour;
+
+    // The rank of the card (ex. 2, 4, wild, draw_four, draw_two, reverse)
     this.rank = rank;
-    this.id = generate_guid();
+
+    // The unique GUID of the card generated at object creation
+    this.id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    	var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    	return v.toString(16);
+	});
+
+	// The width of a card
     this.width = 242;
+
+    // The height of a card
     this.height = 362;
+
+    // Card style offset
     this.offset = -140;
 
-    this.visualize = function (options) {
-    	return Visualize.visualize([this], options);
+    // Wrapper function for card visualisation
+    this.visualise = function (options) {
+    	return visualise.visualise([this], options);
     };
 }; 
 
-var Visualize = {
+// The visualisation object
+var visualise = {
+	// Location of card SVG file
 	deck_file_location: 'img/cards.svg',
 
+	// Default options
 	default_options: {
+		// Default scale is 1:1
 		scale: 1.0,
 	},
 
+	// Gets source href for img tags
 	get_source: function (card) {
-			return Visualize.deck_file_location + '#' + card.colour + '-' + card.rank;
+			return visualise.deck_file_location + '#' + card.colour + '-' + card.rank;
 	},
 
-	visualize: function (cards, options) {
+	// Visualises card
+	visualise: function (cards, options) {
+		// Set options from argument
 		options = options || {};
 
+		// Use default options if none are passed
 		options = $.extend(this.default_options, options);
 
+		// Run a function on each card in the list (map)
 		return cards.map( function (card) {
+			// Create a new image
 			var visualization = $(document.createElement('img'));
-			visualization.attr('src', Visualize.get_source(card));
+
+			// Set the source attribute
+			visualization.attr('src', visualise.get_source(card));
 			
+			// Set the card class
 			visualization.attr('class', 'card');
+
+			// Set the ID as a data attribute
 			visualization.attr('data-id', card.id);
+
+			// Set card height from initial height and scale
 			visualization.attr('height', card.height * options.scale);
+
+			// Set card width from initial width and scale
 			visualization.attr('width', card.width * options.scale);
+
+			// Set offset as margin
 			visualization.attr('style', "margin-left:" + (card.offset * options.scale) + "px;");
 
+			// Return HTML object
 			return visualization;
 		});
 	},
 
-	visualize_list: function (cards, options) {
+	// Visualises a list with the visualise function
+	visualise_list: function (cards, options) {
+		// Run visualise on each card and put each in a li
 		return cards.map( function (card) {
-			return $(document.createElement('li')).append(Visualize.visualize([card], options));
+			// Create li object and append visualised card
+			return $(document.createElement('li')).append(visualise.visualise([card], options));
 		});
 	}
 }
 
+// The player hand object
 var Hand = function (cards) {
+	// Make hand empy by default unless cards are passed
 	this.cards = cards || [];
+
+	// Make empty staging array for to-be played cards
 	this.staging = [];
 
+	// Gets the hand size (number of cards)
 	this.size = function () {
 		return this.cards.length;
 	}
 
+	// Adds a list of cards
 	this.add_cards = function (cards) {
 		this.cards = this.cards + cards;
 	};
 
+	// Find card from card ID
 	this.find_card = function (card_id, where, remove) {
+		// Determine where to find the card
+		//  find it in the cards array unless otherwise specified
 		var here = (where == 'staging' ? this.staging : this.cards);
+
+		// Iterate over each card in given array
 		for (var i = here.length - 1; i >= 0; i--) {
+			// If the ID of it matches the one to be found
 			if (here[i].id == card_id) {
+				// If remove is specified
 				if (remove === true) {
+					// Remove it from the source array and return the card
 					return here.splice(i, 1)[0];
 				} else {
+					// Return the card
 					return here[i];
 				}
 				
 			}
 		}
+
+		// Return null if no card is found
 		return null;
 	};
 }
 
+// The deck object that generates cards and deals them
 var Deck = function () {
 	// The pro's do it, as do we
 	var that = this;
@@ -121,6 +172,7 @@ var Deck = function () {
 		'draw_four': 4
 	}
 
+	// Gets the size of the deck
 	this.size = function () {
 		return this.cards.length;
 	}
@@ -134,6 +186,7 @@ var Deck = function () {
 		this.cards.push(card);
 	};
 
+	// Builds a deck
 	this.build = function (multiplier) {
 		// Default to 1
 		multiplier = multiplier || 1;
@@ -226,8 +279,8 @@ var Game = function (options) {
 
 	this.options = $.extend(this.default_options, options || {});
 
-	this.visualize_top_card = function () {
-		$('#discard-pile-top').attr('src', Visualize.get_source(this.pile[this.pile.length - 1]));
+	this.visualise_top_card = function () {
+		$('#discard-pile-top').attr('src', visualise.get_source(this.pile[this.pile.length - 1]));
 	}
 
 	this.start = function () {
@@ -241,9 +294,9 @@ var Game = function (options) {
 		this.pile = [];
 
 		this.pile.push(this.deck.draw()[0]);
-		this.visualize_top_card();	
+		this.visualise_top_card();	
 		
-		$('#hand-cards').append(Visualize.visualize_list(this.hand.cards, {scale: 0.5}));
+		$('#hand-cards').append(visualise.visualise_list(this.hand.cards, {scale: 0.5}));
 
 		$('#hand-cards, #discard-pile-drop').sortable({
 			connectWith: 'ul',
@@ -305,7 +358,7 @@ var Game = function (options) {
 			while (that.hand.staging.length > 0) {
 				that.pile.push(that.hand.staging.shift());
 			};
-			that.visualize_top_card();
+			that.visualise_top_card();
 			$('#discard-pile-drop').empty();
 			$('#draw').removeClass('disabled');
 			that.currently_drawn_cards = 0;
@@ -335,7 +388,7 @@ var Game = function (options) {
 
 			if (drawn_card !== false) {
 				that.hand.cards.push(drawn_card[0]);
-				$('#hand-cards').append(Visualize.visualize_list(drawn_card, {scale: 0.5}));
+				$('#hand-cards').append(visualise.visualise_list(drawn_card, {scale: 0.5}));
 				that.currently_drawn_cards++;
 				if (that.currently_drawn_cards >= 3) {
 					$('#draw').addClass('disabled');
