@@ -58,6 +58,7 @@ var Visualize = {
 
 var Hand = function (cards) {
 	this.cards = cards || [];
+	this.staging = [];
 
 	this.size = function () {
 		return this.cards.length;
@@ -67,13 +68,19 @@ var Hand = function (cards) {
 		this.cards = this.cards + cards;
 	};
 
-	this.find_card = function (card_id) {
-		var found = null;
-		this.cards.forEach( function (card) {
-			if (card.id == card_id) {
-				found = card;
+	this.find_card = function (card_id, where, remove) {
+		var here = (where == 'staging' ? this.staging : this.cards);
+		for (var i = here.length - 1; i >= 0; i--) {
+			if (here[i].id == card_id) {
+				if (remove === true) {
+					return here.splice(i, 1)[0];
+				} else {
+					return here[i];
+				}
+				
 			}
-		});
+		}
+		return null;
 	};
 }
 
@@ -214,20 +221,27 @@ var Deck = function () {
 }
 
 var Game = function (options) {
-	
 	this.default_options = {}
+	var that = this;
 
 	this.options = $.extend(this.default_options, options || {});
+
+	this.visualize_top_card = function () {
+		$('#discard-pile-top').attr('src', Visualize.get_source(this.pile[this.pile.length - 1]));
+	}
 
 	this.start = function () {
 		this.deck = new Deck();
 		this.deck.build();
 		this.deck.shuffle();
+		this.currently_drawn_cards = 0;
 
 		this.hand = this.deck.deal(1)[0];
+		this.pile = [];
 
-		var initial_card = this.deck.draw()[0];
-		$('#discard-pile-top').attr('src', Visualize.get_source(initial_card));
+		this.pile.push(this.deck.draw()[0]);
+		this.visualize_top_card();	
+		
 		$('#hand-cards').append(Visualize.visualize_list(this.hand.cards, {scale: 0.5}));
 
 		$('#hand-cards, #discard-pile-drop').sortable({
@@ -236,17 +250,102 @@ var Game = function (options) {
 		});
 
 		$('#discard-pile-drop').on('sortover sortreceive', function (event, ui) {
-				if (this.check_eligibility($(card_element).attr('data-id'))) {
-					$(event.toElement).height(362).width(242);
+			var card_id = $(event.toElement).attr('data-id');
+
+			if (card_id === null) {
+				card_id = $(event.toElement.firstChild).attr('data-id');
+			}
+
+			if (that.check_eligibility(card_id, event)) {
+				console.info("You may put this card down");
+				$(event.toElement).height(362).width(242);
+				if (event.type == 'sortreceive') {
+					that.hand.staging.push(that.hand.find_card(card_id, null, true));
 				}
+			} else {
+				console.warn("You may NOT put this card down");
+				if (event.type == 'sortreceive') {
+					ui.sender.sortable("cancel");
+				}
+			}
 		});
+
 		$('#hand-cards').on('sortover sortreceive', function (event, ui) {
+			var card_id = $(event.toElement).attr('data-id');
+
+			if (card_id === null) {
+				card_id = $(event.toElement.firstChild).attr('data-id');
+			}
+
 			$(event.toElement).height(181).width(121);
+
+			if (event.type == 'sortreceive') {
+				if (that.hand.find_card(card_id) === null) {
+					that.hand.cards.push(that.hand.find_card(card_id, 'staging', true));
+				}
+			}
+		});
+
+		$('#play').on('click', function (event) {
+			if (that.hand.staging.length == 0 && that.currently_drawn_cards < 3) {
+				return false;
+			}
+
+			while (that.hand.staging.length > 0) {
+				that.pile.push(that.hand.staging.shift());
+			};
+			that.visualize_top_card();
+			$('#discard-pile-drop').empty();
+			$('#draw').removeClass('disabled');
+			that.currently_drawn_cards = 0;
+
+			$("body").stop().animate({backgroundColor:'#afa'},500,function(){
+				$(this).animate({backgroundColor:'#fff'},500);
+			});
+
+		});
+
+		$('#uno').on('click', function (event) {
+			// Let's check if the person is right...
+		});
+
+		$('#draw').on('click', function (event) {
+			if (that.currently_drawn_cards >= 3) {
+				return null;
+			}
+			var drawn_card = that.deck.draw();
+
+			if (drawn_card !== false) {
+				that.hand.cards.push(drawn_card[0]);
+				$('#hand-cards').append(Visualize.visualize_list(drawn_card, {scale: 0.5}));
+				that.currently_drawn_cards++;
+				if (that.currently_drawn_cards >= 3) {
+					$('#draw').addClass('disabled');
+				}
+			} else {
+				alert("We're running dry, need ammo. Over.");
+			}
+
 		});
 	};
 
-	this.check_eligibility = function (card_id) {
-		this.hand.find_card(card_id);
+	this.check_eligibility = function (card_id, event) {
+		var card = this.hand.find_card(card_id);
+		var top_card = this.pile[this.pile.length - 1];
+
+		console.log(card, top_card, card_id, event);
+
+		if (this.hand.staging.length == 0) { // This will be the first card in staging
+			if (card.colour == top_card.colour || card.rank == top_card.rank || card.rank == 'wild') {
+				return true;
+			}
+		} else { // This is a subsequent card in the staging
+			var top_staging = this.hand.staging[0];
+			if (card.rank == top_staging.rank || (top_staging.rank == 'draw_four' && card.rank == 'draw_two') || (top_staging.rank == 'draw_two' && card.rank == 'draw_four')){
+				return true;
+			}
+		}
+		return false;
 	};
 }
 
