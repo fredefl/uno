@@ -33,3 +33,20 @@ li {
 	list-style-type: none;
 	float:left;
 }
+
+.select-color {
+	width: 412px;
+	margin: 0 auto;
+}
+
+.select-color span {
+	width: 100px !important;
+	height: 100px !important;
+	display: inline-block;
+	cursor: pointer;
+}
+
+.select-color span:hover {
+	opacity: 0.7;
+	transition: ease 0.5s;
+}
