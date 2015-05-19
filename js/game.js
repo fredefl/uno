@@ -340,8 +340,15 @@ var Game = function (options) {
 		});
 
 		$('#play').on('click', function (event) {
-			if (that.hand.staging.length == 0 && that.currently_drawn_cards < 3) {
+			if ( that.hand.staging.length == 0 && that.currently_drawn_cards < 3 ) {
 				return false;
+			}
+
+			if (that.hand.staging.length == 0 && that.currently_drawn_cards == 3) {
+				// The fucker has passed...
+				$('#draw').removeClass('disabled');
+				that.currently_drawn_cards = 0;
+				return;
 			}
 
 			if (that.hand.staging[that.hand.staging.length - 1].colour == 'wild') {
@@ -357,6 +364,7 @@ var Game = function (options) {
 			while (that.hand.staging.length > 0) {
 				that.pile.push(that.hand.staging.shift());
 			};
+
 			that.visualise_top_card();
 			$('#discard-pile-drop').empty();
 			$('#draw').removeClass('disabled');
