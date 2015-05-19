@@ -235,6 +235,7 @@ var Game = function (options) {
 		this.deck.build();
 		this.deck.shuffle();
 		this.currently_drawn_cards = 0;
+		this.wild_new_colour = null;
 
 		this.hand = this.deck.deal(1)[0];
 		this.pile = [];
@@ -291,6 +292,16 @@ var Game = function (options) {
 				return false;
 			}
 
+			if (that.hand.staging[that.hand.staging.length - 1].colour == 'wild') {
+				if (that.wild_new_colour == null) {
+					$('#chooseColour').modal('show');
+					return false;
+				} else {
+					that.hand.staging[that.hand.staging.length - 1].colour = that.wild_new_colour;
+					that.wild_new_colour = null;
+				}
+			}
+
 			while (that.hand.staging.length > 0) {
 				that.pile.push(that.hand.staging.shift());
 			};
@@ -304,6 +315,13 @@ var Game = function (options) {
 			});
 
 		});
+
+		$('.select-colour span').on('click', function (event) {
+			var colour = $(this).attr('data-colour');
+			that.wild_new_colour = colour;
+			$('#chooseColour').modal('hide');
+			$('#play').click();
+		})
 
 		$('#uno').on('click', function (event) {
 			// Let's check if the person is right...
@@ -333,10 +351,10 @@ var Game = function (options) {
 		var card = this.hand.find_card(card_id);
 		var top_card = this.pile[this.pile.length - 1];
 
-		console.log(card, top_card, card_id, event);
+		console.log("Checking eligibility...", card, top_card, card_id, event);
 
 		if (this.hand.staging.length == 0) { // This will be the first card in staging
-			if (card.colour == top_card.colour || card.rank == top_card.rank || card.rank == 'wild') {
+			if (card.colour == top_card.colour || card.rank == top_card.rank || card.colour == 'wild') {
 				return true;
 			}
 		} else { // This is a subsequent card in the staging

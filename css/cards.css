@@ -34,19 +34,19 @@ li {
 	float:left;
 }
 
-.select-color {
+.select-colour {
 	width: 412px;
 	margin: 0 auto;
 }
 
-.select-color span {
+.select-colour span {
 	width: 100px !important;
 	height: 100px !important;
 	display: inline-block;
 	cursor: pointer;
 }
 
-.select-color span:hover {
+.select-colour span:hover {
 	opacity: 0.7;
 	transition: ease 0.5s;
 }
