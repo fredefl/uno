@@ -196,7 +196,6 @@ var Deck = function () {
 
 		// Add all colour cards
 		this.colours.forEach( function (colour) {
-
 			Object.keys(that.coloured_ranks).forEach( function (rank) {
 				amount = that.coloured_ranks[rank];
 				for (var i = 1; i <= amount * multiplier; i++) {
@@ -363,10 +362,26 @@ var Game = function (options) {
 			$('#draw').removeClass('disabled');
 			that.currently_drawn_cards = 0;
 
-			$("body").stop().animate({backgroundColor:'#afa'},500,function(){
-				$(this).animate({backgroundColor:'#fff'},500);
-			});
+			if (that.hand.size() == 0) {
+				// Show firework
+				show_firework();
+			} else {
+				$("body").stop().animate({backgroundColor:'#afa'},500,function(){
+					$(this).animate({backgroundColor:'#fff'},500);
+				});
+			}
+		});
 
+		$(document).bind('keydown', 'p', function (event) {
+			$('#play').click();
+		});
+
+		$(document).bind('keydown', 'd', function (event) {
+			$('#draw').click();
+		});
+
+		$(document).bind('keydown', 'u', function (event) {
+			$('#uno').click();
 		});
 
 		$('.select-colour span').on('click', function (event) {
