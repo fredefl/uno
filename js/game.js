@@ -1,7 +1,15 @@
 
+function generate_guid () {
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+	});
+}
+
 var Card = function (colour, rank) {
     this.colour = colour;
     this.rank = rank;
+    this.id = generate_guid();
     this.width = 242;
     this.height = 362;
     this.offset = -140;
@@ -12,26 +20,27 @@ var Card = function (colour, rank) {
 }; 
 
 var Visualize = {
-	deckFileLocation: 'img/cards.svg',
+	deck_file_location: 'img/cards.svg',
 
-	defaultOptions: {
+	default_options: {
 		scale: 1.0,
 	},
 
-	getSource: function (card) {
-			return Visualize.deckFileLocation + '#' + card.colour + '-' + card.rank;
+	get_source: function (card) {
+			return Visualize.deck_file_location + '#' + card.colour + '-' + card.rank;
 	},
 
 	visualize: function (cards, options) {
 		options = options || {};
 
-		options = $.extend(this.defaultOptions, options);
+		options = $.extend(this.default_options, options);
 
 		return cards.map( function (card) {
 			var visualization = $(document.createElement('img'));
-			visualization.attr('src', Visualize.getSource(card));
+			visualization.attr('src', Visualize.get_source(card));
 			
 			visualization.attr('class', 'card');
+			visualization.attr('data-id', card.id);
 			visualization.attr('height', card.height * options.scale);
 			visualization.attr('width', card.width * options.scale);
 			visualization.attr('style', "margin-left:" + (card.offset * options.scale) + "px;");
@@ -40,7 +49,7 @@ var Visualize = {
 		});
 	},
 
-	visualizeList: function (cards, options) {
+	visualize_list: function (cards, options) {
 		return cards.map( function (card) {
 			return $(document.createElement('li')).append(Visualize.visualize([card], options));
 		});
@@ -54,8 +63,17 @@ var Hand = function (cards) {
 		return this.cards.length;
 	}
 
-	this.addCards = function (cards) {
+	this.add_cards = function (cards) {
 		this.cards = this.cards + cards;
+	};
+
+	this.find_card = function (card_id) {
+		var found = null;
+		this.cards.forEach( function (card) {
+			if (card.id == card_id) {
+				found = card;
+			}
+		});
 	};
 }
 
@@ -67,14 +85,14 @@ var Deck = function () {
 	this.cards = [];
 
 	// Hand size
-	this.handSize = 7;
+	this.hand_size = 7;
 
 	// Contains colours present in the game
 	// - please do not add other colours, do ONLY exclude colours
 	this.colours = ['red', 'green', 'blue', 'yellow'];
 
 	// Contains all cards with colours
-	this.colouredRanks = {
+	this.coloured_ranks = {
 		'0': 1,
 		'1': 2,
 		'2': 2,
@@ -91,7 +109,7 @@ var Deck = function () {
 	};
 
 	// Contains all cards without colours (wild) 
-	this.wildRanks = {
+	this.wild_ranks = {
 		'wild': 4,
 		'draw_four': 4
 	}
@@ -101,11 +119,11 @@ var Deck = function () {
 	}
 	
 	// Adds multiple cards
-	this.addCards = function (cards) {
-		cards.every(this.addCard);
+	this.add_cards = function (cards) {
+		cards.every(this.add_card);
 	};
 
-	this.addCard = function (card) {
+	this.add_card = function (card) {
 		this.cards.push(card);
 	};
 
@@ -119,37 +137,37 @@ var Deck = function () {
 		// Add all colour cards
 		this.colours.forEach( function (colour) {
 
-			Object.keys(that.colouredRanks).forEach( function (rank) {
-				amount = that.colouredRanks[rank];
+			Object.keys(that.coloured_ranks).forEach( function (rank) {
+				amount = that.coloured_ranks[rank];
 				for (var i = 1; i <= amount * multiplier; i++) {
-					that.addCard(new Card(colour, rank));
+					that.add_card(new Card(colour, rank));
 				};
 			});
 		});
 
 		// Add all wild cards
-		Object.keys(that.wildRanks).forEach( function (rank) {
-			amount = that.wildRanks[rank];
+		Object.keys(that.wild_ranks).forEach( function (rank) {
+			amount = that.wild_ranks[rank];
 			for (var i = 1; i <= amount * multiplier; i++) {
-				that.addCard(new Card('wild', rank));
+				that.add_card(new Card('wild', rank));
 			};
 		});
 	}
 
 	// Fisher-Yates shuffle
 	this.shuffle = function () {
-		var currentIndex = this.cards.length, temporaryValue, randomIndex ;
+		var current_index = this.cards.length, temporary_value, randomIndex;
 
 		// While there remain elements to shuffle...
-		while (0 !== currentIndex) {
+		while (0 !== current_index) {
 			// Pick a remaining element...
-			randomIndex = Math.floor(Math.random() * currentIndex);
-			currentIndex -= 1;
+			random_index = Math.floor(Math.random() * current_index);
+			current_index -= 1;
 
 			// And swap it with the current element.
-			temporaryValue = this.cards[currentIndex];
-			this.cards[currentIndex] = this.cards[randomIndex];
-			this.cards[randomIndex] = temporaryValue;
+			temporary_value = this.cards[current_index];
+			this.cards[current_index] = this.cards[random_index];
+			this.cards[random_index] = temporary_value;
 		}
 	}
 
@@ -159,16 +177,16 @@ var Deck = function () {
 		
 		// Check card supply
 		if (this.cards.length >= amount) {
-			var drawnCards = [];
+			var drawn_cards = [];
 
 			// Return x amount of cards
 			for (var i = 1; i <= amount; i++) {
 				// Pop cards off the stack and push them to the new pile
-				drawnCards.push(this.cards.pop());
+				drawn_cards.push(this.cards.pop());
 			}
 
 			// Return drawn cards
-			return drawnCards;
+			return drawn_cards;
 		}
 
 		// We are out of cards, please refill
@@ -180,12 +198,12 @@ var Deck = function () {
 		amount = amount || 1;
 
 		// Check card supply
-		if (this.cards.length >= amount * this.handSize) {
+		if (this.cards.length >= amount * this.hand_size) {
 			var hands = []
 
 			// Return x amount of hands
 			for (var i = 1; i <= amount; i++) {
-				hands.push( new Hand(this.draw(this.handSize)) );
+				hands.push( new Hand(this.draw(this.hand_size)) );
 			}
 
 			return hands;
@@ -197,9 +215,9 @@ var Deck = function () {
 
 var Game = function (options) {
 	
-	this.defaultOptions = {}
+	this.default_options = {}
 
-	this.options = $.extend(this.defaultOptions, options || {});
+	this.options = $.extend(this.default_options, options || {});
 
 	this.start = function () {
 		this.deck = new Deck();
@@ -208,9 +226,9 @@ var Game = function (options) {
 
 		this.hand = this.deck.deal(1)[0];
 
-		var initialCard = this.deck.draw()[0];
-		$('#discard-pile-top').attr('src', Visualize.getSource(initialCard));
-		$('#hand-cards').append(Visualize.visualizeList(this.hand.cards, {scale: 0.5}));
+		var initial_card = this.deck.draw()[0];
+		$('#discard-pile-top').attr('src', Visualize.get_source(initial_card));
+		$('#hand-cards').append(Visualize.visualize_list(this.hand.cards, {scale: 0.5}));
 
 		$('#hand-cards, #discard-pile-drop').sortable({
 			connectWith: 'ul',
@@ -218,16 +236,23 @@ var Game = function (options) {
 		});
 
 		$('#discard-pile-drop').on('sortover sortreceive', function (event, ui) {
-				$(event.toElement).height(362).width(242);
+				if (this.check_eligibility($(card_element).attr('data-id'))) {
+					$(event.toElement).height(362).width(242);
+				}
 		});
 		$('#hand-cards').on('sortover sortreceive', function (event, ui) {
 			$(event.toElement).height(181).width(121);
 		});
-	}
+	};
+
+	this.check_eligibility = function (card_id) {
+		this.hand.find_card(card_id);
+	};
 }
 
+var game = new Game();
+	game.start();
 
 $(function() {
-	var game = new Game();
-	game.start();
+	
 });
